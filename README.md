@@ -140,7 +140,7 @@ The car change lanes when the there is a slow car in front of it, and it is safe
 
 ##  Reflection
 
-Based on the provided code from the seed project and project Q&A video, the path planning algorithms start at [src/main.cpp](https://github.com/darienmt/CarND-Path-Planning-Project-P1/blob/master/src/main.cpp#L246) line 102 to the line 243. The comments are provided to improve the code readability.
+Based on the provided code from the seed project and project Q&A video, the path planning algorithms start at src/main.cpp line 102 to the line 243. The comments are provided to improve the code readability.
 
 The code consist of three parts:
 
