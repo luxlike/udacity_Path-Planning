@@ -1,6 +1,10 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
-   
+
+[//]: # "Image References"
+
+[drive_without_incident]: ./driving.png "Drive 4.79 miles without incidentl"
+
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).  
 
@@ -92,54 +96,76 @@ A really helpful resource for doing this project and creating smooth trajectorie
     git checkout e94b6e1
     ```
 
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
 ## Project Instructions and Rubric
+### The code compiles correctly
+```
+root@af7c072cf2bf:/home/workspace/CarND-Path-Planning-Project/build# cmake .. && make
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/workspace/CarND-Path-Planning-Project/build
+Scanning dependencies of target path_planning
+[ 50%] Building CXX object CMakeFiles/path_planning.dir/src/main.cpp.o
+[100%] Linking CXX executable path_planning
+[100%] Built target path_planning
+root@af7c072cf2bf:/home/workspace/CarND-Path-Planning-Project/build#
+```
 
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
+### The car is able to drive at least 4.32 miles without incident
+
+I ran the simulator for 4.72 miles without incidents.
+
+![alt text][drive_without_incident]
+
+### The car drives according to the speed limit.
+
+No speed limit red message was seen.
+
+### Max Acceleration and Jerk are not Exceeded.
+
+Max jerk red message was not seen.
+
+### Car does not have collisions.
+
+No collisions occurred.
+
+### The car stays in its lane, except for the time between changing lanes.
+
+The car stays in its lane most of the time but when it changes lane because of traffic or to return to the center lane.
+
+### The car is able to change lanes
+
+The car change lanes when the there is a slow car in front of it, and it is safe to change lanes (no other cars around) or when it is safe to return the center lane.
 
 
-## Call for IDE Profiles Pull Requests
 
-Help your fellow students!
+##  Reflection
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to ensure
-that students don't feel pressured to use one IDE or another.
+Based on the provided code from the seed project and project Q&A video, the path planning algorithms start at [src/main.cpp](https://github.com/darienmt/CarND-Path-Planning-Project-P1/blob/master/src/main.cpp#L246) line 102 to the line 243. The comments are provided to improve the code readability.
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+The code consist of three parts:
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
+### Prediction line 112 to line 130
 
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
+This part of the code deal with the telemetry and sensor fusion data. 
+First, check car is in my lane and check it's speed and check s value greater than mine.
+When check value is limited value, set too close variable and lane set to zero.
 
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
+These questions are answered by calculating the lane each other car is and the position it will be at the end of the last plan trajectory. A car is considered "dangerous" when its distance to our car is less than 30 meters in front or behind us.
 
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
+### Collision avoidance line 131 to line 136
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+This part avoid collision:
+
+- When too_close is set, decrease velocity.
+- Else increase velocity to limited value.
+
+Based on the prediction of the situation we are in, this code increases the speed, decrease speed, or make a lane change when it is safe.
+
+### Trajectory line 139 to line 243
+
+This code does the calculation of the trajectory based on the speed and lane output from the behavior, car coordinates and past path points.
+
+First, the last two points of the previous trajectory (or the car position if there are almost empty previous trajectory, lines 148 to 157) are used in conjunction three points at a far distance (lines 178 to 188) to initialize the spline calculation (line 200 and 201). To make the work less complicated to the spline calculation based on those points, the coordinates are transformed (shift and rotation) to local car coordinates (lines 190 to 197).
+
+In order to ensure more continuity on the trajectory (in addition to adding the last two point of the pass trajectory to the spline adjustment), the pass trajectory points are copied to the new trajectory (lines 206 to 213). The rest of the points are calculated by evaluating the spline and transforming the output coordinates to not local coordinates (lines 216 to 242).
 
