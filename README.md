@@ -112,7 +112,7 @@ root@af7c072cf2bf:/home/workspace/CarND-Path-Planning-Project/build#
 
 ### The car is able to drive at least 4.32 miles without incident
 
-I ran the simulator for 4.72 miles without incidents.
+I ran the simulator for 5.59 miles without incidents.
 
 ![alt text][drive_without_incident]
 
