@@ -140,32 +140,32 @@ The car change lanes when the there is a slow car in front of it, and it is safe
 
 ##  Reflection
 
-Based on the provided code from the seed project and project Q&A video, the path planning algorithms start at src/main.cpp line 102 to the line 243. The comments are provided to improve the code readability.
+Based on the provided code from the seed project and project Q&A video, the path planning algorithms start at src/main.cpp line 103 to line 280. The comments are provided to improve the code readability.
 
 The code consist of three parts:
 
-### Prediction line 112 to line 130
+### Prediction(line 114 to line 156)
 
 This part of the code deal with the telemetry and sensor fusion data. 
-First, check car is in my lane and check it's speed and check s value greater than mine.
-When check value is limited value, set too close variable and lane set to zero.
+First, check car lane by d value and check car on around(too close, car left, car right).
+When check value is limited value, set too close variable true.(line 142)
+Check car around by car lane and lane value.(line 145 to line 155)
 
-These questions are answered by calculating the lane each other car is and the position it will be at the end of the last plan trajectory. A car is considered "dangerous" when its distance to our car is less than 30 meters in front or behind us.
+### Behavior(line 159 to line 174)
 
-### Collision avoidance line 131 to line 136
+When too close is set:
 
-This part avoid collision:
+- Change lane to left when car left is false and lane is bigger than 0.
+- Change lane to right when car right is false and lane is smaller than 2.
+- Else decrease speed as much as max accelleration(0.224).
 
-- When too_close is set, decrease velocity.
-- Else increase velocity to limited value.
+Otherwise, it stays in its lane and increases its speed by its maximum acceleration (0.224) to its maximum speed.
 
-Based on the prediction of the situation we are in, this code increases the speed, decrease speed, or make a lane change when it is safe.
-
-### Trajectory line 139 to line 243
+### Trajectory(line 177 to line 280)
 
 This code does the calculation of the trajectory based on the speed and lane output from the behavior, car coordinates and past path points.
 
-First, the last two points of the previous trajectory (or the car position if there are almost empty previous trajectory, lines 148 to 157) are used in conjunction three points at a far distance (lines 178 to 188) to initialize the spline calculation (line 200 and 201). To make the work less complicated to the spline calculation based on those points, the coordinates are transformed (shift and rotation) to local car coordinates (lines 190 to 197).
+First, the last two points of the previous trajectory (or the car position if there are almost empty previous trajectory, lines 186 to 197) are used in conjunction three points at a far distance (lines 215 to 225) to initialize the spline calculation (line 237 and 238). To make the work less complicated to the spline calculation based on those points, the coordinates are transformed (shift and rotation) to local car coordinates (lines 227 to 234).
 
-In order to ensure more continuity on the trajectory (in addition to adding the last two point of the pass trajectory to the spline adjustment), the pass trajectory points are copied to the new trajectory (lines 206 to 213). The rest of the points are calculated by evaluating the spline and transforming the output coordinates to not local coordinates (lines 216 to 242).
+In order to ensure more continuity on the trajectory (in addition to adding the last two point of the pass trajectory to the spline adjustment), the pass trajectory points are copied to the new trajectory (lines 243 to 250). The rest of the points are calculated by evaluating the spline and transforming the output coordinates to not local coordinates (lines 253 to 280).
 
