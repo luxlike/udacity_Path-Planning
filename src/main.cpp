@@ -14,6 +14,9 @@ using nlohmann::json;
 using std::string;
 using std::vector;
 
+#define MAX_SPEED 49.5
+#define MAX_ACC .224
+
 int main() {
   uWS::Hub h;
 
@@ -63,9 +66,7 @@ int main() {
                uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
-    // The 2 signifies a websocket event
-
-    
+    // The 2 signifies a websocket event    
 
     if (length && length > 2 && data[0] == '4' && data[1] == '2') {
 
@@ -106,34 +107,71 @@ int main() {
           }
 
           bool too_close = false;
+          bool car_left = false;
+          bool car_right = false;
 
           // find ref_v to use
           for(int i=0;i<sensor_fusion.size();i++) {
             // car is in my lane
+            float check_car_s = sensor_fusion[i][5];
             float d = sensor_fusion[i][6];
-            if(d < (2+4*lane+2) && d > (2+4*lane-2)) {
-              double vx = sensor_fusion[i][3];
-              double vy = sensor_fusion[i][4];
-              double check_speed = sqrt(vx*vx + vy*vy);
-              double check_car_s = sensor_fusion[i][5];
+            double vx = sensor_fusion[i][3];
+            double vy = sensor_fusion[i][4];
 
-              check_car_s += ((double)prev_size * .02 * check_speed);
-              //check s values greater than mine and s gap
-              if((check_car_s > car_s) && (check_car_s - car_s) < 30) {
-                too_close = true;
-                if(lane > 0) {
-                  lane = 0;
-                }
-              }
+            if(d < 0) continue;
+
+            double check_speed = sqrt(vx*vx + vy*vy);
+            check_car_s += ((double)prev_size * .02 * check_speed);
+
+            // Check car lane
+            int car_lane = -1;
+            
+            if(d > 0 && d < 4) {
+              car_lane = 0;
+            } else if(d > 4 && d < 8) {
+              car_lane = 1;
+            } else if(d > 8 && d < 12) {
+              car_lane = 2;
+            } else {
+              continue;
             }
-          }
 
-          // Collision avoidance
-          if(too_close) {
-            ref_vel -= .224;
-          } else if(ref_vel < 49.5) {
-            ref_vel += .224;
+            // Check car on around
+            if (car_lane == lane) {
+              // Car in our lane.
+              if(check_car_s > car_s && check_car_s - car_s < 30) {                
+                too_close = true;
+              }
+            } else if (car_lane - lane == -1) {
+              // Car left
+              if(car_s - 30 < check_car_s && car_s + 30 > check_car_s) {
+                car_left = true;
+              }
+            } else if (car_lane - lane == 1) {
+              // Car right
+              if(car_s - 30 < check_car_s && car_s + 30 > check_car_s) {
+                car_right = true;
+              }
+            }                      
           }
+          
+          // Chage lane and speed algorithm
+          if(too_close) {                                           
+            if(!car_left && lane > 0) {
+              lane -= 1;              
+            } else if(!car_right && lane < 2) {
+              lane += 1;              
+            } else {
+              ref_vel -= MAX_ACC;     
+            }       
+          } else { 
+            if((lane == 0 && !car_right) || (lane == 2 && !car_left)) {
+              lane = 1;
+            }
+            if(ref_vel < MAX_SPEED) {
+              ref_vel += MAX_ACC;
+            }            
+          }            
 
           // Create a list of widely spaced (x,y) waypoints
           vector<double> ptsx;
@@ -155,6 +193,7 @@ int main() {
 
             ptsy.push_back(prev_car_y);
             ptsy.push_back(car_y);
+
           } else { // use the previous path's end point as starting reference
             // Redefine reference state as previous path end point
             ref_x = previous_path_x[prev_size-1];
@@ -170,8 +209,6 @@ int main() {
 
             ptsy.push_back(ref_y_prev);
             ptsy.push_back(ref_y);
-
-
           }
 
           // In Frenet add evenly 30m spaced points ahead of the starting reference
@@ -239,6 +276,7 @@ int main() {
 
             next_x_vals.push_back(x_point);
             next_y_vals.push_back(y_point);
+
           }
           //////////////////////// END OF PATH PLANNING //////////////////////////////////////////////////////////
 
